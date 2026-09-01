@@ -93,8 +93,17 @@ de duas pessoas com acesso igual, por decisão de projeto.
 
 ### Usuários
 
-Crie os dois usuários em **Authentication → Users** no painel do Supabase
-(e-mail e senha). Não há cadastro pela interface: é um sistema fechado.
+O login é por **nome de usuário**, não por e-mail. O Supabase Auth identifica
+conta por e-mail, então `lib/auth.ts` faz a ponte: o que a pessoa digita vira
+`<usuario>@casascaciotti.local` antes de ir para o Supabase. `.local` é um TLD
+reservado que nunca resolve na internet — nenhum e-mail é enviado para lá, o
+endereço existe só como identificador interno.
+
+Para criar um usuário, em **Authentication → Users → Add user** no painel do
+Supabase: e-mail `<usuario>@casascaciotti.local`, senha à escolha, e marque
+**Auto Confirm User**. Não há cadastro pela interface: é um sistema fechado.
+
+Para trocar uma senha: **Authentication → Users → o usuário → Reset password**.
 
 ## Como o dinheiro é contado
 

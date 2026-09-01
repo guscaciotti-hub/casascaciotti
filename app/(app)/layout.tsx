@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { createClient } from '@/lib/supabase/server'
+import { emailToUsername } from '@/lib/auth'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -10,5 +11,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/login')
 
-  return <AppShell email={user.email ?? ''}>{children}</AppShell>
+  return <AppShell username={emailToUsername(user.email)}>{children}</AppShell>
 }

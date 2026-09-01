@@ -28,7 +28,13 @@ const SECONDARY_ITEMS = [
   { href: '/categorias', label: 'Categorias', icon: Tags },
 ]
 
-export function AppShell({ email, children }: { email: string; children: React.ReactNode }) {
+export function AppShell({
+  username,
+  children,
+}: {
+  username: string
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
 
   const isActive = (href: string) =>
@@ -63,7 +69,7 @@ export function AppShell({ email, children }: { email: string; children: React.R
         </nav>
 
         <div className="space-y-3 border-t border-border px-4 py-4">
-          <p className="truncate px-2 text-xs text-muted-foreground">{email}</p>
+          <p className="truncate px-2 text-xs text-muted-foreground">{username}</p>
           <div className="flex items-center gap-1">
             <ThemeToggle />
             <SignOutButton />

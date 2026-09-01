@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { usernameToEmail } from '@/lib/auth'
 
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || '/'
 
-  const [email, setEmail] = React.useState('')
+  const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
   const [pending, setPending] = React.useState(false)
@@ -25,12 +26,15 @@ export function LoginForm() {
     setError(null)
 
     const supabase = createClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: usernameToEmail(username),
+      password,
+    })
 
     if (signInError) {
       setError(
         signInError.message === 'Invalid login credentials'
-          ? 'E-mail ou senha incorretos.'
+          ? 'Usuário ou senha incorretos.'
           : signInError.message,
       )
       setPending(false)
@@ -46,15 +50,18 @@ export function LoginForm() {
       <CardContent className="pt-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="username">Usuário</Label>
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="username"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="voce@email.com"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="gustavo"
             />
           </div>
 
