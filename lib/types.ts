@@ -77,7 +77,10 @@ export interface BillPayment {
   reference_month: string
   is_paid: boolean
   paid_at: string | null
+  /** Total efetivamente pago no mês, já incluindo juros. */
   amount_paid: number | null
+  /** Parcela de juros dentro de `amount_paid`. Nulo quando pago em dia. */
+  interest_paid: number | null
 }
 
 export interface SavingsAccount {

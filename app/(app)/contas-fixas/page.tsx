@@ -62,6 +62,9 @@ async function BillsContent({ referenceMonth }: { referenceMonth: string }) {
     isOverdue: status.isOverdue,
     isDueSoon: status.isDueSoon,
     effectiveAmount: status.effectiveAmount,
+    // Sem valor cadastrado, a conta é de valor variável (luz, água, telefone):
+    // o que vale é o que o usuário informar ao marcar como paga.
+    isVariable: Number(status.bill.amount) === 0,
   }))
 
   return <BillsGrid bills={cards} categories={categories} referenceMonth={referenceMonth} />

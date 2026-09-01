@@ -67,14 +67,21 @@ export async function deleteFixedBill(id: string): Promise<ActionResult> {
 
 /**
  * Marca (ou desmarca) uma conta fixa como paga no mês.
- * Grava em `bill_payments` com upsert na chave (conta, mês) — o toggle pode
- * ir e voltar quantas vezes for preciso sem duplicar linha.
+ *
+ * `amountPaid` é o total que saiu de fato — o que importa em luz, água e
+ * telefone, que variam todo mês e cujo valor cadastrado é só referência.
+ * `interestPaid` separa os juros de um pagamento em atraso, para dar para ver
+ * quanto a casa gastou de juros no ano sem confundir com o valor da conta.
+ *
+ * Upsert na chave (conta, mês): o toggle pode ir e voltar quantas vezes for
+ * preciso sem duplicar linha.
  */
 export async function toggleBillPayment(input: {
   fixedBillId: string
   referenceMonth: string
   isPaid: boolean
   amountPaid?: number | null
+  interestPaid?: number | null
 }): Promise<ActionResult> {
   try {
     if (!/^\d{4}-\d{2}-01$/.test(input.referenceMonth)) {
@@ -89,7 +96,9 @@ export async function toggleBillPayment(input: {
         reference_month: input.referenceMonth,
         is_paid: input.isPaid,
         paid_at: input.isPaid ? new Date().toISOString() : null,
+        // Desmarcar limpa os valores: o mês volta a ficar em aberto.
         amount_paid: input.isPaid ? (input.amountPaid ?? null) : null,
+        interest_paid: input.isPaid ? (input.interestPaid || null) : null,
       },
       { onConflict: 'fixed_bill_id,reference_month' },
     )

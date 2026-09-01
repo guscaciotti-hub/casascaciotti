@@ -47,6 +47,8 @@ export interface BillCardData {
   isOverdue: boolean
   isDueSoon: boolean
   effectiveAmount: number
+  /** `true` quando a conta não tem valor fixo (luz, água, telefone). */
+  isVariable: boolean
 }
 
 export function BillsGrid({
@@ -126,16 +128,26 @@ function BillCard({
   const { toast } = useToast()
 
   const [editing, setEditing] = React.useState(false)
+  const [paying, setPaying] = React.useState(false)
   const [toggling, setToggling] = React.useState(false)
 
   const category = categories.find((item) => item.id === data.bill.category_id)
 
+  /**
+   * Marcar como paga abre o formulário de pagamento — é onde entram o valor
+   * real (luz e água variam) e os juros. Desmarcar é direto: só limpa o mês.
+   */
   async function handleToggle(isPaid: boolean) {
+    if (isPaid) {
+      setPaying(true)
+      return
+    }
+
     setToggling(true)
     const result = await toggleBillPayment({
       fixedBillId: data.bill.id,
       referenceMonth,
-      isPaid,
+      isPaid: false,
     })
     setToggling(false)
 
@@ -219,9 +231,23 @@ function BillCard({
           </Button>
         </div>
 
-        <p className="tabular text-xl font-semibold tracking-tight">
-          {formatCurrency(data.effectiveAmount)}
-        </p>
+        <div>
+          {data.isVariable && !data.isPaid ? (
+            <p className="text-xl font-semibold tracking-tight text-muted-foreground">
+              valor variável
+            </p>
+          ) : (
+            <p className="tabular text-xl font-semibold tracking-tight">
+              {formatCurrency(data.effectiveAmount)}
+            </p>
+          )}
+
+          {data.payment?.interest_paid ? (
+            <p className="mt-0.5 text-xs text-destructive">
+              inclui {formatCurrency(data.payment.interest_paid)} de juros
+            </p>
+          ) : null}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {data.isPaid ? (
@@ -249,7 +275,7 @@ function BillCard({
               aria-label={`Marcar ${data.bill.name} como paga`}
             />
             <span className="text-muted-foreground">
-              {toggling ? 'salvando…' : data.isPaid ? 'Pago' : 'Marcar como pago'}
+              {toggling ? 'salvando…' : data.isPaid ? 'Pago' : 'Marcar como paga'}
             </span>
           </label>
 
@@ -265,8 +291,149 @@ function BillCard({
             }
           />
         </div>
+
+        <PaymentDialog
+          data={data}
+          referenceMonth={referenceMonth}
+          open={paying}
+          onOpenChange={setPaying}
+        />
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Formulário de pagamento de uma conta no mês.
+ *
+ * Pergunta o valor que saiu de fato — porque luz, água e telefone variam e o
+ * valor cadastrado é só referência — e os juros, quando pagou em atraso.
+ */
+function PaymentDialog({
+  data,
+  referenceMonth,
+  open,
+  onOpenChange,
+}: {
+  data: BillCardData
+  referenceMonth: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const [amount, setAmount] = React.useState('')
+  const [interest, setInterest] = React.useState('')
+  const [saving, setSaving] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (!open) return
+    // Conta de valor fixo já vem preenchida; a variável começa vazia.
+    setAmount(data.isVariable ? '' : String(data.bill.amount).replace('.', ','))
+    setInterest('')
+    setError(null)
+  }, [open, data.isVariable, data.bill.amount])
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+
+    const valor = parseCurrencyInput(amount)
+    const juros = interest.trim() ? parseCurrencyInput(interest) : 0
+
+    if (valor <= 0) {
+      setError('Informe quanto foi pago.')
+      return
+    }
+
+    setSaving(true)
+    const result = await toggleBillPayment({
+      fixedBillId: data.bill.id,
+      referenceMonth,
+      isPaid: true,
+      // O total pago já inclui os juros.
+      amountPaid: valor + juros,
+      interestPaid: juros,
+    })
+    setSaving(false)
+
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+
+    toast({ variant: 'success', title: `${data.bill.name} marcada como paga` })
+    onOpenChange(false)
+    router.refresh()
+  }
+
+  const juros = interest.trim() ? parseCurrencyInput(interest) : 0
+  const total = parseCurrencyInput(amount) + juros
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Pagar {data.bill.name}</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor={`pago-${data.bill.id}`}>Valor da conta</Label>
+            <Input
+              id={`pago-${data.bill.id}`}
+              inputMode="decimal"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder="0,00"
+              autoFocus
+            />
+            {data.isVariable ? (
+              <p className="text-xs text-muted-foreground">
+                Esta conta não tem valor fixo — informe o que veio neste mês.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`juros-${data.bill.id}`}>Juros (opcional)</Label>
+            <Input
+              id={`juros-${data.bill.id}`}
+              inputMode="decimal"
+              value={interest}
+              onChange={(event) => setInterest(event.target.value)}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-muted-foreground">
+              Preencha só se pagou em atraso. Fica separado do valor da conta.
+            </p>
+          </div>
+
+          {juros > 0 ? (
+            <p className="tabular rounded-md bg-muted/50 p-3 text-sm">
+              Total pago: <span className="font-medium">{formatCurrency(total)}</span>
+            </p>
+          ) : null}
+
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Marcar como paga
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 
