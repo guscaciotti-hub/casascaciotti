@@ -1,0 +1,69 @@
+FATURA MENSAL
+EMPRESAS MASTERCARD
+VALORES EM REAIS
+Data de Vencimento:
+10/09/2026
+Data do Fechamento da Fatura:
+28/08/2026
+00 000 000 FULANO DE TAL
+0000 XXXX XXXX 0000
+Pagamento Mínimo
+1.775,53
+Fatura Anterior
+13.276,56
+-
+Pagamentos/Créditos
+4.100,00
+=
+Saldo
+341,07
++
+Despesas/Débitos
+1.877,53
+=
+Total
+13.887,87
+Banco Santander (Brasil) S.A. - CNPJ: 90.400.888/0001-42
+Demonstrativo de Transações
+DataDescriçãoLocalMoeda de OrigemUS$R$Cotação
+Transações Nacionais
+02-01-2026GRUPO EXEMPLO 1018PARC 08/10 SAO VICENTE\  
+ 
+399,90
+ 
+03-08-2026PAGAMENTO DE FATURA  
+ 
+-1.300,00
+ 
+03-08-2026EBN *EXEMPLOHOSTCURITIBA\  
+ 
+64,99
+ 
+03-08-2026LOJA*EXEMPLOSAO PAULO\  
+ 
+-112,59
+ 
+07-08-2026KEETABR*BC EXEMPLO LTDASao
+Vicente\KEETABR*BC
+EX
+  
+ 
+108,39
+ 
+28-08-2026ANUIDADE DIFERENCIADA  
+ 
+ 0,00
+ 
+Transações Internacionais
+04-08-2026SERVICO *ASSINATURASAN FRANCISCO\39,99BRL
+7,89
+42,42
+5,37
+04-08-2026IOF DESPESA NO EXTERIOR  
+ 
+1,48
+ 
+Total desta Fatura R$
+13.887,87
+Pagamento Mínimo R$
+1.775,53

@@ -9,10 +9,11 @@ import type { ParseOptions, ParseResult, StatementParser } from './types'
 import { canonicalLine, parseBrlAmount, buildIsoDate } from './shared'
 import { nubankParser } from './nubank'
 import { itauParser } from './itau'
+import { santanderParser } from './santander'
 import { genericParser } from './generic'
 
 /** Parsers específicos, na ordem de tentativa. O genérico fica fora da lista. */
-export const PARSERS: StatementParser[] = [nubankParser, itauParser]
+export const PARSERS: StatementParser[] = [nubankParser, santanderParser, itauParser]
 
 /** Opções de origem oferecidas na tela de upload. */
 export const SOURCE_OPTIONS = [
@@ -67,7 +68,7 @@ export function parseStatement(
 export function extractTotalAmount(text: string): number | null {
   const canonical = canonicalLine(text)
   const patterns = [
-    /TOTAL\s+(?:DA\s+)?FATURA[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
+    /TOTAL\s+(?:DA\s+|DESTA\s+)?FATURA[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
     /VALOR\s+TOTAL[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
     /TOTAL\s+A\s+PAGAR[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
   ]
@@ -99,5 +100,5 @@ export function extractDueDate(text: string, referenceMonth: string): string | n
   )
 }
 
-export { genericParser, nubankParser, itauParser }
+export { genericParser, nubankParser, itauParser, santanderParser }
 export type { ParsedTransaction, ParseOptions, ParseResult, StatementParser } from './types'

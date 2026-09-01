@@ -19,8 +19,8 @@ PDF → texto (server-side) → parser do banco → normalização → regras �
 1. **Extração** — `pdf-parse` roda no servidor (Route Handler). Nada de parse no
    browser.
 2. **Parser** — cada banco tem layout próprio, então há parsers plugáveis com
-   detecção de emissor (`lib/parsers/`). Sem emissor reconhecido, cai no
-   genérico.
+   detecção de emissor (`lib/parsers/`): Nubank, Santander e Itaú. Sem emissor
+   reconhecido, cai no genérico.
 3. **Normalização** (`lib/normalize.ts`) — maiúsculas, sem acento, sem prefixo de
    adquirente (`PAG*`, `MP*`, `IFD*`…), sem sufixo de cidade/UF, sem marcador de
    parcela, sem sufixo societário. O resultado vai para `normalized_description`.
@@ -129,6 +129,7 @@ Cobrem as peças em que bug silencioso vira dado errado:
 - `lib/__tests__/normalize.test.ts` — motor de normalização
 - `lib/__tests__/matcher.test.ts` — matcher de regras e sua precedência
 - `lib/__tests__/parsers.test.ts` — parsers de fatura
+- `lib/__tests__/santander.test.ts` — o layout do Santander, que é o mais atípico
 - `lib/__tests__/pipeline.test.ts` — ponta a ponta sobre um PDF de verdade
 
 Mexeu em normalização ou no matcher? Traga o teste junto.
