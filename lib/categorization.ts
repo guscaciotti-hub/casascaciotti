@@ -109,6 +109,8 @@ export async function reprocessTransactions(
   let query = supabase
     .from('transactions')
     .select('id, normalized_description, raw_description, merchant_id, category_id')
+    // Pagamento da própria fatura não tem estabelecimento a descobrir.
+    .eq('is_payment', false)
 
   if (scope === 'unidentified') {
     query = query.is('merchant_id', null)

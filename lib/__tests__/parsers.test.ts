@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { parseStatement, selectParser } from '@/lib/parsers'
 import { parseGeneric } from '@/lib/parsers/generic'
 import { parseNubank, detectNubank } from '@/lib/parsers/nubank'
-import { parseBrlAmount, resolveYear } from '@/lib/parsers/shared'
+import {
+  isCreditDescription,
+  isInvoicePayment,
+  parseBrlAmount,
+  resolveYear,
+} from '@/lib/parsers/shared'
 
 const options = { referenceMonth: '2026-03-01' }
 
@@ -196,5 +201,33 @@ describe('parseStatement', () => {
   it('selectParser respeita o emissor escolhido pelo usuário', () => {
     expect(selectParser('texto qualquer', 'itau').id).toBe('itau')
     expect(selectParser('texto qualquer', 'inexistente').id).toBe('generic')
+  })
+})
+
+describe('isInvoicePayment', () => {
+  it('reconhece pagamento da própria fatura', () => {
+    expect(isInvoicePayment('PAGAMENTO DE FATURA')).toBe(true)
+    expect(isInvoicePayment('Pagamento recebido')).toBe(true)
+    expect(isInvoicePayment('PAGTO FATURA')).toBe(true)
+    expect(isInvoicePayment('SALDO ANTERIOR')).toBe(true)
+  })
+
+  it('não confunde estorno de loja com pagamento da fatura', () => {
+    // A diferença importa: estorno abate o gasto do mês, pagamento não —
+    // pagar o cartão é transferência, não consumo.
+    expect(isInvoicePayment('ESTORNO SHOPEE*62045670')).toBe(false)
+    expect(isInvoicePayment('DEVOLUCAO MERCADOLIVRE')).toBe(false)
+    expect(isInvoicePayment('MERCADO*MERCADOLIVRE SAO PAULO')).toBe(false)
+    expect(isInvoicePayment('CASHBACK NUBANK')).toBe(false)
+  })
+
+  it('não captura compra que só menciona pagamento no nome', () => {
+    expect(isInvoicePayment('PAGSEGURO PADARIA')).toBe(false)
+    expect(isInvoicePayment('PAGUE MENOS FARMACIA')).toBe(false)
+  })
+
+  it('estorno continua sendo crédito, mesmo não sendo pagamento', () => {
+    expect(isCreditDescription('ESTORNO SHOPEE')).toBe(true)
+    expect(isInvoicePayment('ESTORNO SHOPEE')).toBe(false)
   })
 })

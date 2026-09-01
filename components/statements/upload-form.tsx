@@ -81,10 +81,15 @@ export function UploadForm() {
       toast({
         variant: 'success',
         title: `${payload.inserted} lançamentos importados`,
-        description:
-          payload.duplicates > 0
-            ? `${payload.duplicates} ignorados por já existirem.`
-            : `Lidos com o parser ${payload.parserLabel}.`,
+        description: [
+          `Parser ${payload.parserLabel}.`,
+          payload.payments > 0
+            ? `${payload.payments} pagamentos da fatura não contam como gasto.`
+            : null,
+          payload.duplicates > 0 ? `${payload.duplicates} ignorados por já existirem.` : null,
+        ]
+          .filter(Boolean)
+          .join(' '),
       })
 
       router.push(`/revisao/${payload.statementId}`)

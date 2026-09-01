@@ -30,6 +30,8 @@ export interface MonthlyTransaction {
   merchant_id: string | null
   category_id: string | null
   is_reviewed: boolean
+  /** Pagamento da própria fatura: fica fora do gasto do mês. */
+  is_payment: boolean
   notes: string | null
   statement_id: string | null
   reference_month: string
@@ -54,14 +56,26 @@ export async function getMerchantRules(): Promise<MerchantRule[]> {
   return (data ?? []) as MerchantRule[]
 }
 
-/** Lançamentos de um mês, já com o mês resolvido pela view. */
-export async function getMonthTransactions(referenceMonth: string): Promise<MonthlyTransaction[]> {
+/**
+ * Lançamentos de um mês, já com o mês resolvido pela view.
+ *
+ * Pagamento da própria fatura fica de fora por padrão: ele é transferência,
+ * não consumo, e somá-lo zeraria o gasto do mês. Passe
+ * `includePayments: true` para ver a fatura inteira, como ela veio do banco.
+ */
+export async function getMonthTransactions(
+  referenceMonth: string,
+  options: { includePayments?: boolean } = {},
+): Promise<MonthlyTransaction[]> {
   const supabase = createClient()
-  const { data } = await supabase
+  let query = supabase
     .from('transactions_monthly')
     .select('*')
     .eq('reference_month', referenceMonth)
-    .order('transaction_date', { ascending: false })
+
+  if (!options.includePayments) query = query.eq('is_payment', false)
+
+  const { data } = await query.order('transaction_date', { ascending: false })
 
   return (data ?? []) as MonthlyTransaction[]
 }
@@ -77,6 +91,7 @@ export async function getMonthlyTotals(
   const { data } = await supabase
     .from('transactions_monthly')
     .select('amount, reference_month')
+    .eq('is_payment', false)
     .gte('reference_month', range[0])
     .lte('reference_month', range[range.length - 1])
 
@@ -131,6 +146,7 @@ export async function countUnidentified(): Promise<number> {
     .from('transactions')
     .select('id', { count: 'exact', head: true })
     .is('merchant_id', null)
+    .eq('is_payment', false)
 
   return count ?? 0
 }

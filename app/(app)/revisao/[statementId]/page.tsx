@@ -20,8 +20,13 @@ export default async function ReviewPage({ params }: { params: { statementId: st
     getMerchants(),
   ])
 
-  const recognized = transactions.filter((row) => row.merchant_id !== null)
-  const unidentified = transactions
+  // Pagamento da própria fatura não entra na revisão: não há estabelecimento
+  // a descobrir nem categoria a escolher — pagar o cartão não é gasto.
+  const reviewable = transactions.filter((row) => !row.is_payment)
+  const payments = transactions.filter((row) => row.is_payment)
+
+  const recognized = reviewable.filter((row) => row.merchant_id !== null)
+  const unidentified = reviewable
     .filter((row) => row.merchant_id === null)
     .map((row) => ({
       id: row.id,
@@ -49,6 +54,7 @@ export default async function ReviewPage({ params }: { params: { statementId: st
           <ReviewSummaryBadges
             recognizedCount={recognized.length}
             pendingCount={unidentified.length}
+            paymentCount={payments.length}
           />
         }
       />

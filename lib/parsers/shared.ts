@@ -81,6 +81,33 @@ export function isCreditDescription(description: string): boolean {
 }
 
 /**
+ * Marcadores de pagamento da própria fatura — mais estritos que os de crédito.
+ * Um estorno de loja também é crédito, mas abate o gasto do mês; pagar o
+ * cartão não, porque é transferência.
+ */
+const INVOICE_PAYMENT_MARKERS: RegExp[] = [
+  /\bPAGAMENTO\s+DE\s+FATURA\b/,
+  /\bPAGAMENTO\s+FATURA\b/,
+  /\bPAGAMENTO\s+RECEBIDO\b/,
+  /\bPAGAMENTO\s+EFETUADO\b/,
+  /\bPAGTO\s+(DE\s+)?FATURA\b/,
+  /\bPAGAMENTO\s+EM\s+\w+\b/,
+  /\bSALDO\s+ANTERIOR\b/,
+]
+
+/**
+ * `true` quando o lançamento é pagamento da própria fatura.
+ *
+ * Esses ficam fora do gasto do mês: somá-los zeraria o total, já que uma
+ * fatura de R$ 13.500 costuma vir acompanhada de quase o mesmo em pagamentos
+ * da fatura anterior.
+ */
+export function isInvoicePayment(description: string): boolean {
+  const canonical = canonicalLine(description)
+  return INVOICE_PAYMENT_MARKERS.some((pattern) => pattern.test(canonical))
+}
+
+/**
  * Converte um valor em formato brasileiro para número.
  * Aceita `1.234,56`, `R$ 1.234,56`, `-R$ 1.234,56`, `1.234,56-` e `1234.56`.
  * Devolve `null` quando não é um valor monetário.

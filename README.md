@@ -78,6 +78,8 @@ As migrations estão em `supabase/migrations/`, em ordem:
 | `0001_init.sql` | Tabelas, índices, RLS e o bucket `statements` no Storage |
 | `0002_seed.sql` | Categorias iniciais (idempotente) |
 | `0003_transaction_months.sql` | View `transactions_monthly`, que resolve o mês de cada lançamento |
+| `0004_bill_interest.sql` | Juros pagos numa conta fixa |
+| `0005_transaction_payments.sql` | `is_payment`, que separa pagamento de fatura de gasto |
 
 Com a [CLI do Supabase](https://supabase.com/docs/guides/local-development):
 
@@ -107,9 +109,16 @@ Para trocar uma senha: **Authentication → Users → o usuário → Reset passw
 
 ## Como o dinheiro é contado
 
-- **Valor positivo é despesa; negativo é estorno, crédito ou pagamento da
-  fatura.** Os totais somam com sinal, então um estorno abate o gasto do mês em
-  vez de virar receita.
+- **Valor positivo é despesa; negativo é crédito.** Os totais somam com sinal,
+  então um estorno de loja abate o gasto do mês em vez de virar receita — se a
+  loja devolveu o dinheiro, a casa de fato gastou menos.
+- **Pagamento da própria fatura não é gasto.** A fatura lista, junto com as
+  compras, os pagamentos da fatura anterior. Somá-los zeraria o mês: uma fatura
+  de R$ 13.500 com R$ 12.900 em pagamentos apareceria como R$ 600 de gasto.
+  `transactions.is_payment` marca esses lançamentos; eles ficam no histórico
+  mas fora do gasto do mês, da divisão por categoria e da fila de revisão.
+  `isInvoicePayment` (em `lib/parsers/shared.ts`) é mais estrito que
+  `isCreditDescription` justamente para não confundir os dois.
 - **O "mês do gasto" de um lançamento de fatura é o mês da fatura**, não a data
   da compra — uma fatura de março traz compras de fevereiro, mas o dinheiro sai
   em março. Lançamentos manuais usam a data deles. É o que a view

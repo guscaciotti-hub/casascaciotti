@@ -5,6 +5,7 @@ import { categorize, getUncategorizedId, loadActiveRules } from '@/lib/categoriz
 import { dedupeHash } from '@/lib/hash'
 import { normalizeDescription } from '@/lib/normalize'
 import { parseStatement } from '@/lib/parsers'
+import { isInvoicePayment } from '@/lib/parsers/shared'
 import { extractPdfText } from '@/lib/pdf'
 
 export interface ImportInput {
@@ -28,6 +29,8 @@ export interface ImportSummary {
   recognized: number
   /** Gravados sem merchant — vão para a fila de revisão. */
   unidentified: number
+  /** Pagamentos da própria fatura: fora do gasto e fora da revisão. */
+  payments: number
   totalAmount: number
   fileUrl: string | null
 }
@@ -98,6 +101,8 @@ export async function importStatement(
   const rows = parsed.transactions.map((transaction) => {
     const normalized = normalizeDescription(transaction.description)
     const { merchantId, categoryId } = categorize(rules, normalized, uncategorizedId)
+    // Pagar o cartão não é gasto nem tem o que revisar.
+    const isPayment = isInvoicePayment(transaction.description)
 
     return {
       statement_id: statement.id,
@@ -109,8 +114,10 @@ export async function importStatement(
       installment_total: transaction.installmentTotal ?? null,
       merchant_id: merchantId,
       category_id: categoryId,
-      // Reconhecido já entra revisado; o resto vai para a fila.
-      is_reviewed: merchantId !== null,
+      is_payment: isPayment,
+      // Reconhecido já entra revisado; pagamento também, porque não há o que
+      // decidir nele. O resto vai para a fila.
+      is_reviewed: merchantId !== null || isPayment,
       dedupe_hash: dedupeHash({
         source: input.source,
         transactionDate: transaction.date,
@@ -130,14 +137,15 @@ export async function importStatement(
   const { data: inserted, error: insertError } = await supabase
     .from('transactions')
     .upsert([...unique.values()], { onConflict: 'dedupe_hash', ignoreDuplicates: true })
-    .select('id, merchant_id')
+    .select('id, merchant_id, is_payment')
 
   if (insertError) {
     throw new Error(`Não foi possível gravar os lançamentos: ${insertError.message}`)
   }
 
   const insertedRows = inserted ?? []
-  const recognized = insertedRows.filter((row) => row.merchant_id !== null).length
+  const payments = insertedRows.filter((row) => row.is_payment).length
+  const recognized = insertedRows.filter((row) => row.merchant_id !== null && !row.is_payment).length
 
   return {
     statementId: statement.id,
@@ -147,7 +155,8 @@ export async function importStatement(
     inserted: insertedRows.length,
     duplicates: parsed.transactions.length - insertedRows.length,
     recognized,
-    unidentified: insertedRows.length - recognized,
+    payments,
+    unidentified: insertedRows.length - recognized - payments,
     totalAmount: round2(expenseTotal),
     fileUrl,
   }

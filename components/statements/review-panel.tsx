@@ -203,9 +203,12 @@ export function ReviewPanel({
 export function ReviewSummaryBadges({
   recognizedCount,
   pendingCount,
+  paymentCount = 0,
 }: {
   recognizedCount: number
   pendingCount: number
+  /** Pagamentos da própria fatura, fora da revisão. */
+  paymentCount?: number
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -215,6 +218,9 @@ export function ReviewSummaryBadges({
       ) : (
         <Badge variant="success">tudo classificado</Badge>
       )}
+      {paymentCount > 0 ? (
+        <Badge variant="outline">{paymentCount} pagamentos da fatura</Badge>
+      ) : null}
     </div>
   )
 }
