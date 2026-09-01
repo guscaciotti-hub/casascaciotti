@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { usernameToEmail } from '@/lib/auth'
+import { describeAnonKey } from '@/lib/supabase/env'
 
 export function LoginForm() {
   const router = useRouter()
@@ -32,11 +33,7 @@ export function LoginForm() {
     })
 
     if (signInError) {
-      setError(
-        signInError.message === 'Invalid login credentials'
-          ? 'Usuário ou senha incorretos.'
-          : signInError.message,
-      )
+      setError(translateAuthError(signInError.message))
       setPending(false)
       return
     }
@@ -91,4 +88,26 @@ export function LoginForm() {
       </CardContent>
     </Card>
   )
+}
+
+/**
+ * Traduz o erro do Supabase para algo acionável.
+ *
+ * "Invalid API key" quase sempre significa chave errada ou truncada na
+ * variável de ambiente — não um problema de senha. A descrição da chave em uso
+ * (formato e tamanho, nunca o valor) é o que permite comparar com o painel do
+ * Supabase sem precisar abrir o console do navegador.
+ */
+function translateAuthError(message: string): string {
+  if (message === 'Invalid login credentials') return 'Usuário ou senha incorretos.'
+
+  if (/invalid api key/i.test(message)) {
+    return `Chave do Supabase inválida. A que está configurada é: ${describeAnonKey()}. Confira NEXT_PUBLIC_SUPABASE_ANON_KEY no painel da Vercel.`
+  }
+
+  if (/failed to fetch|networkerror/i.test(message)) {
+    return 'Não foi possível falar com o servidor. Confira NEXT_PUBLIC_SUPABASE_URL no painel da Vercel.'
+  }
+
+  return message
 }
