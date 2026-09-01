@@ -87,8 +87,8 @@ export async function labelTransaction(
     if (loadError || !transaction) return fail('Lançamento não encontrado.')
 
     // 1. Resolve a merchant — existente ou nova.
-    let merchantId = parsed.merchantId
-    if (!merchantId) {
+    let merchantId: string | null = parsed.merchantId
+    if (merchantId === null) {
       if (!parsed.newMerchantName) {
         return fail('Escolha um estabelecimento existente ou informe um nome novo.')
       }
@@ -116,10 +116,13 @@ export async function labelTransaction(
       }
     }
 
+    if (merchantId === null) return fail('Não foi possível resolver o estabelecimento.')
+    const resolvedMerchantId: string = merchantId
+
     // 2. Aplica ao lançamento.
     const { error: updateError } = await supabase
       .from('transactions')
-      .update({ merchant_id: merchantId, category_id: parsed.categoryId, is_reviewed: true })
+      .update({ merchant_id: resolvedMerchantId, category_id: parsed.categoryId, is_reviewed: true })
       .eq('id', parsed.transactionId)
 
     if (updateError) return fail(`Não foi possível salvar: ${updateError.message}`)
@@ -133,7 +136,7 @@ export async function labelTransaction(
 
       if (pattern.length >= 3) {
         const { error: ruleError } = await supabase.from('merchant_rules').insert({
-          merchant_id: merchantId,
+          merchant_id: resolvedMerchantId,
           pattern,
           match_type: 'contains',
           priority: 100,
@@ -152,7 +155,7 @@ export async function labelTransaction(
     }
 
     revalidateAll()
-    return ok({ merchantId, ruleCreated, reprocessed })
+    return ok({ merchantId: resolvedMerchantId, ruleCreated, reprocessed })
   } catch (error) {
     return fail(errorMessage(error))
   }

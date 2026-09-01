@@ -127,3 +127,10 @@ export function daysBetween(from: Date, to: Date): number {
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()
   return Math.round((b - a) / 86_400_000)
 }
+
+/** Lê `?mes=2026-03-01` da URL; qualquer outra coisa cai no mês atual. */
+export function normalizeMonthParam(value: string | undefined): string {
+  if (value && /^\d{4}-\d{2}-01$/.test(value)) return value
+  if (value && /^\d{4}-\d{2}$/.test(value)) return `${value}-01`
+  return toReferenceMonth()
+}
