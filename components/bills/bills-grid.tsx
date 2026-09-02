@@ -534,14 +534,17 @@ function BillForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="bill-amount">Valor</Label>
+          <Label htmlFor="bill-amount">
+            Valor <span className="font-normal text-muted-foreground">(opcional)</span>
+          </Label>
+          {/* Sem `required`: luz, água e telefone variam todo mês, e deixar em
+              branco é justamente como se cadastra uma conta de valor variável. */}
           <Input
             id="bill-amount"
             inputMode="decimal"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            placeholder="1.234,56"
-            required
+            placeholder="deixe vazio se varia"
           />
         </div>
 
@@ -558,6 +561,13 @@ function BillForm({
           />
         </div>
       </div>
+
+      {parseCurrencyInput(amount) === 0 ? (
+        <p className="rounded-md bg-muted/50 p-3 text-xs leading-snug text-muted-foreground">
+          Sem valor, a conta entra como <span className="font-medium">valor variável</span>: ela
+          aparece todo mês na data do vencimento e você informa quanto veio ao marcar como paga.
+        </p>
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="bill-category">Categoria</Label>
