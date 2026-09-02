@@ -11,7 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDashboardData } from '@/lib/queries'
 import {
   formatCurrency,
+  formatDayMonth,
   formatMonthLabel,
+  formatMonthName,
   formatPercent,
   normalizeMonthParam,
 } from '@/lib/format'
@@ -30,7 +32,7 @@ export default function DashboardPage({
     <PageContainer>
       <PageHeader
         title="Visão do mês"
-        description="Para onde o dinheiro da casa está indo."
+        description="O mês da fatura, não o da compra: cada mês mostra o dinheiro que sai nele."
         action={<MonthPicker value={referenceMonth} />}
       />
 
@@ -70,7 +72,7 @@ async function DashboardContent({ referenceMonth }: { referenceMonth: string }) 
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
-          label="Gasto no mês"
+          label={`A pagar em ${formatMonthName(referenceMonth)}`}
           value={formatCurrency(data.totalSpent)}
           hint={
             monthChange === null
@@ -78,6 +80,7 @@ async function DashboardContent({ referenceMonth }: { referenceMonth: string }) 
               : `${monthChange > 0 ? '+' : ''}${formatPercent(monthChange)} vs. mês anterior`
           }
           tone={monthChange !== null && monthChange > 0 ? 'up' : monthChange !== null ? 'down' : 'flat'}
+          sub={describeInvoicePeriod(data.lastPurchase, data.dueDates)}
         />
         <StatCard
           label="Contas fixas pendentes"
@@ -105,7 +108,7 @@ async function DashboardContent({ referenceMonth }: { referenceMonth: string }) 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Gasto por categoria</CardTitle>
+            <CardTitle>Por categoria</CardTitle>
           </CardHeader>
           <CardContent>
             <CategoryDonut
@@ -120,7 +123,7 @@ async function DashboardContent({ referenceMonth }: { referenceMonth: string }) 
 
         <Card>
           <CardHeader>
-            <CardTitle>Evolução dos últimos 12 meses</CardTitle>
+            <CardTitle>Evolução do que sai por mês</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyTrend data={data.monthlyTotals} />
@@ -184,16 +187,34 @@ async function DashboardContent({ referenceMonth }: { referenceMonth: string }) 
   )
 }
 
+/**
+ * Descreve o que a fatura do mês realmente representa: compras feitas antes,
+ * cobradas agora. Sem isso, "A pagar em setembro" some com a informação de que
+ * as compras são de agosto.
+ */
+function describeInvoicePeriod(lastPurchase: string | null, dueDates: string[]): string | undefined {
+  const parts: string[] = []
+
+  if (lastPurchase) parts.push(`compras até ${formatDayMonth(lastPurchase)}`)
+  if (dueDates.length === 1) parts.push(`vence ${formatDayMonth(dueDates[0])}`)
+  else if (dueDates.length > 1) parts.push(`vencem ${dueDates.map(formatDayMonth).join(' e ')}`)
+
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
 function StatCard({
   label,
   value,
   hint,
+  sub,
   href,
   tone = 'flat',
 }: {
   label: string
   value: string
   hint: string
+  /** Linha secundária, para contexto que o rótulo não cabe. */
+  sub?: string
   href?: string
   tone?: 'up' | 'down' | 'flat'
 }) {
@@ -211,6 +232,7 @@ function StatCard({
       >
         {hint}
       </p>
+      {sub ? <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p> : null}
     </>
   )
 

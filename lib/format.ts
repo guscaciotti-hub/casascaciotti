@@ -69,6 +69,13 @@ export function formatMonthLabel(referenceMonth: string): string {
   return `${name.charAt(0).toUpperCase()}${name.slice(1)} de ${date.getFullYear()}`
 }
 
+/** `2026-03-01` -> `março`. Para frases no meio do texto. */
+export function formatMonthName(referenceMonth: string): string {
+  const date = parseIsoDate(referenceMonth)
+  if (Number.isNaN(date.getTime())) return referenceMonth
+  return MONTHS_PT[date.getMonth()]
+}
+
 /** `2026-03-01` -> `mar/26`. Para eixos de gráfico. */
 export function formatMonthShort(referenceMonth: string): string {
   const date = parseIsoDate(referenceMonth)
@@ -96,6 +103,14 @@ export function addMonths(referenceMonth: string, delta: number): string {
 /** Lista de `reference_month` terminando no mês informado (inclusive). */
 export function lastMonths(referenceMonth: string, count: number): string[] {
   return Array.from({ length: count }, (_, index) => addMonths(referenceMonth, index - (count - 1)))
+}
+
+/** `2026-08-24` -> `24/08`. Data curta, sem o ano. */
+export function formatDayMonth(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = parseIsoDate(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 /** Formata `3/10` a partir dos campos de parcela. Vazio quando não há parcela. */

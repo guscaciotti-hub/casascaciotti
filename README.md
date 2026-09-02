@@ -119,10 +119,15 @@ Para trocar uma senha: **Authentication → Users → o usuário → Reset passw
   mas fora do gasto do mês, da divisão por categoria e da fila de revisão.
   `isInvoicePayment` (em `lib/parsers/shared.ts`) é mais estrito que
   `isCreditDescription` justamente para não confundir os dois.
-- **O "mês do gasto" de um lançamento de fatura é o mês da fatura**, não a data
-  da compra — uma fatura de março traz compras de fevereiro, mas o dinheiro sai
-  em março. Lançamentos manuais usam a data deles. É o que a view
-  `transactions_monthly` resolve.
+- **O mês de um lançamento de fatura é o mês da fatura**, não a data da compra —
+  uma fatura de março traz compras de fevereiro, mas o dinheiro sai em março.
+  Lançamentos manuais usam a data deles. É o que a view `transactions_monthly`
+  resolve.
+
+  Por isso o dashboard diz **"A pagar em março"**, e não "gasto de março": o
+  número é o dinheiro que sai naquele mês, não o consumo daquele mês. Os dois
+  são diferentes e confundi-los é fácil, então o card mostra também até quando
+  vão as compras e quando a fatura vence.
 - **`dedupe_hash`** é o SHA256 de origem + data + descrição bruta + valor, com
   constraint `UNIQUE`. A importação faz `upsert` ignorando conflitos e informa
   quantos foram pulados, então reimportar a mesma fatura é seguro.

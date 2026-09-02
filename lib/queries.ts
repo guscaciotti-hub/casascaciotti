@@ -310,6 +310,19 @@ function daysUntil(from: Date, to: Date): number {
   return Math.round((b - a) / 86_400_000)
 }
 
+/** Vencimentos das faturas cujo mês de referência é o informado. */
+export async function getMonthDueDates(referenceMonth: string): Promise<string[]> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('statements')
+    .select('due_date')
+    .eq('reference_month', referenceMonth)
+    .not('due_date', 'is', null)
+    .order('due_date')
+
+  return (data ?? []).map((row) => row.due_date as string)
+}
+
 /** Carrega tudo que o dashboard precisa, para um mês. */
 export async function getDashboardData(referenceMonth: string) {
   const previousMonth = addMonths(referenceMonth, -1)
@@ -333,6 +346,14 @@ export async function getDashboardData(referenceMonth: string) {
     getSavingsAccounts(),
     countUnidentified(),
   ])
+
+  const dueDates = await getMonthDueDates(referenceMonth)
+
+  // O mês da fatura não é o mês da compra: uma fatura que vence em setembro
+  // cobra o que foi comprado em agosto. Guardamos a data da compra mais recente
+  // para que o dashboard possa dizer isso em vez de deixar subentendido.
+  const purchaseDates = current.map((row) => row.transaction_date).sort()
+  const lastPurchase = purchaseDates[purchaseDates.length - 1] ?? null
 
   const activeBills = bills.filter((bill) => bill.is_active)
   const billStatuses = buildBillStatuses(activeBills, payments, referenceMonth)
@@ -359,6 +380,8 @@ export async function getDashboardData(referenceMonth: string) {
     futureInstallments: futureInstallmentsTotal(current),
     unidentified,
     transactionCount: current.length,
+    dueDates,
+    lastPurchase,
   }
 }
 
