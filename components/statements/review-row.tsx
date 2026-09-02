@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/components/ui/toast'
 import { formatCurrency, formatDate, formatInstallment } from '@/lib/format'
 import { suggestPattern } from '@/lib/normalize'
+import { cn } from '@/lib/utils'
 import type { Category, Merchant } from '@/lib/types'
 
 const NEW_MERCHANT = '__nova__'
@@ -68,7 +69,11 @@ export function ReviewRow({
     suggestPattern(transaction.normalized_description),
   )
   const [saving, setSaving] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  // O erro guarda o campo a que pertence: uma mensagem solta no rodapé não
+  // diz qual caixa está faltando, e o usuário fica preso olhando o botão.
+  const [error, setError] = React.useState<{ field: 'category' | 'merchant' | 'form'; message: string } | null>(
+    null,
+  )
 
   // A sugestão da IA chega depois da montagem — pré-preenche sem sobrescrever
   // o que o usuário já digitou.
@@ -89,11 +94,11 @@ export function ReviewRow({
     setError(null)
 
     if (!categoryId) {
-      setError('Escolha a categoria.')
+      setError({ field: 'category', message: 'Escolha a categoria.' })
       return
     }
     if (isNewMerchant && newMerchantName.trim().length < 2) {
-      setError('Dê um nome ao estabelecimento.')
+      setError({ field: 'merchant', message: 'Dê um nome ao estabelecimento.' })
       return
     }
 
@@ -108,7 +113,7 @@ export function ReviewRow({
     })
 
     if (!result.ok) {
-      setError(result.error)
+      setError({ field: 'form', message: result.error })
       setSaving(false)
       return
     }
@@ -174,16 +179,36 @@ export function ReviewRow({
               onChange={(event) => setNewMerchantName(event.target.value)}
               placeholder="Ex.: Escola dos meninos"
               aria-label="Nome do novo estabelecimento"
+              aria-invalid={error?.field === 'merchant'}
+              className={cn(error?.field === 'merchant' && 'border-destructive')}
             />
+          ) : null}
+
+          {error?.field === 'merchant' ? (
+            <p role="alert" className="text-xs text-destructive">
+              {error.message}
+            </p>
           ) : null}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor={`category-${transaction.id}`} className="text-xs text-muted-foreground">
-            Categoria
+            Categoria <span aria-hidden className="text-destructive">*</span>
           </Label>
-          <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger id={`category-${transaction.id}`}>
+          <Select
+            value={categoryId}
+            onValueChange={(value) => {
+              setCategoryId(value)
+              setError((current) => (current?.field === 'category' ? null : current))
+            }}
+          >
+            <SelectTrigger
+              id={`category-${transaction.id}`}
+              aria-invalid={error?.field === 'category'}
+              className={cn(
+                error?.field === 'category' && 'border-destructive ring-2 ring-destructive/30',
+              )}
+            >
               <SelectValue placeholder="Escolher categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -194,6 +219,12 @@ export function ReviewRow({
               ))}
             </SelectContent>
           </Select>
+
+          {error?.field === 'category' ? (
+            <p role="alert" className="text-xs text-destructive">
+              {error.message}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -222,9 +253,9 @@ export function ReviewRow({
         ) : null}
       </div>
 
-      {error ? (
+      {error?.field === 'form' ? (
         <p role="alert" className="text-sm text-destructive">
-          {error}
+          {error.message}
         </p>
       ) : null}
 
