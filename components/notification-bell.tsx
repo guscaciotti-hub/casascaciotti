@@ -131,7 +131,7 @@ export function NotificationBell({
       ) : null}
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+        <div className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
           <div className="border-b border-border px-4 py-2.5">
             <p className="text-sm font-medium">Recados</p>
             <p className="text-xs text-muted-foreground">
@@ -241,7 +241,7 @@ function Balloon({
   if (!message) return null
 
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-64 animate-in fade-in slide-in-from-top-1 duration-300">
+    <div className="absolute right-0 top-full z-50 mt-2 w-[min(17rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-top-1 duration-300">
       {/* A pontinha que faz o balão apontar para o sininho. */}
       <div className="absolute right-3.5 -top-1 h-2.5 w-2.5 rotate-45 rounded-[2px] border-l border-t border-border bg-popover" />
 

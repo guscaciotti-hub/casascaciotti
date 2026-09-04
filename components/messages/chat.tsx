@@ -113,7 +113,10 @@ export function Chat({
 
   return (
     <div
-      className="relative flex h-[calc(100dvh-14rem)] flex-col gap-3 lg:h-[calc(100dvh-13rem)]"
+      // Altura da tela menos cabeçalho, título e a barra inferior do celular.
+      // `min-h` garante que numa tela baixa a conversa ainda seja usável — aí
+      // a página rola, em vez de espremer a caixa de escrever.
+      className="relative flex h-[calc(100dvh-17.5rem)] min-h-[22rem] flex-col gap-3 sm:h-[calc(100dvh-15rem)] lg:h-[calc(100dvh-13rem)]"
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes('Files')) return
         event.preventDefault()

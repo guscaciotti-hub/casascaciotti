@@ -24,7 +24,13 @@ export function PageHeader({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
+      {/* No celular as ações ocupam a linha inteira e quebram se não couberem;
+          no desktop voltam a ser um bloco encostado à direita. */}
+      {action ? (
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:flex-nowrap">
+          {action}
+        </div>
+      ) : null}
     </div>
   )
 }

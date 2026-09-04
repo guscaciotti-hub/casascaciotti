@@ -97,3 +97,36 @@
     scrollbar-width: none;
   }
 }
+
+/*
+ * Campo de formulário no celular.
+ *
+ * O Safari do iOS dá zoom na página ao focar um campo com fonte menor que
+ * 16px, e sair desse zoom exige gesto. Na planilha de contas, onde se toca
+ * célula após célula, isso torna a tela inutilizável — a cada toque a página
+ * salta. O tamanho só muda onde o problema existe, então o desktop segue com
+ * a densidade original.
+ *
+ * Fora de `@layer` e com `!important` de propósito: as classes utilitárias do
+ * Tailwind (`text-sm`, `text-xs`) têm especificidade maior que um seletor de
+ * elemento, e é justamente sobre elas que esta regra precisa passar.
+ */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/*
+ * Campo de data vazio na planilha de contas.
+ *
+ * O navegador desenha "dd/mm/aaaa" em cinza quando não há data. Com duas
+ * colunas de data e uma dúzia de linhas, a tela enche de texto que não é
+ * dado. O formato reaparece assim que a célula recebe foco, que é quando ele
+ * de fato ajuda a digitar.
+ */
+input[type='date'][data-empty='true']:not(:focus)::-webkit-datetime-edit {
+  color: transparent;
+}

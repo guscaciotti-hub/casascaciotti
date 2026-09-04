@@ -84,7 +84,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Cabeçalho — o sininho fica aqui em cima, em qualquer tela. */}
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/85 px-4 py-3 backdrop-blur">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/85 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
           {/* No desktop a marca já está na barra lateral; aqui só no celular. */}
           <Link href="/" className="text-sm font-semibold tracking-tight lg:hidden">
             Casa Scaciotti
@@ -96,7 +96,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 pb-24 lg:pb-10">{children}</main>
+        <main className="flex-1 pb-28 lg:pb-10">{children}</main>
 
         {/* Navegação inferior — mobile */}
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden">

@@ -34,17 +34,29 @@ import type { BillCardData } from '@/components/bills/bills-grid'
 /** As pessoas da casa, para a coluna "Quem?" não virar digitação livre toda vez. */
 const PEOPLE = ['Gustavo', 'Renata']
 
-/** Colunas na ordem da planilha. O índice é usado na navegação por teclado. */
+/**
+ * Colunas na ordem da planilha. O índice é usado na navegação por teclado.
+ *
+ * A largura é fixa, como numa planilha: sem isso o navegador reparte o espaço
+ * pelo conteúdo e a coluna Valor encolhe até cortar o número — "R$ 3.500,0" é
+ * pior que número nenhum. O que não couber rola dentro da própria célula.
+ */
 const COLUMNS = [
-  'Tipo',
-  'Valor',
-  'Parcela',
-  'Vencimento',
-  'Status',
-  'Quem?',
-  'Pago em:',
-  'Observações',
+  { label: 'Tipo', width: 150 },
+  { label: 'Valor', width: 125 },
+  { label: 'Parcela', width: 85 },
+  { label: 'Vencimento', width: 130 },
+  { label: 'Status', width: 70 },
+  { label: 'Quem?', width: 110 },
+  { label: 'Pago em:', width: 130 },
+  { label: 'Observações', width: 190 },
 ] as const
+
+/** Largura da coluna de ações (subir, descer, excluir). */
+const ACTIONS_WIDTH = 115
+
+const TABLE_MIN_WIDTH =
+  COLUMNS.reduce((total, column) => total + column.width, 0) + ACTIONS_WIDTH
 
 export function BillsSheet({
   bills,
@@ -61,25 +73,35 @@ export function BillsSheet({
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
+        <table
+          className="w-full table-fixed border-collapse text-sm"
+          style={{ minWidth: TABLE_MIN_WIDTH }}
+        >
+          <colgroup>
+            {COLUMNS.map((column) => (
+              <col key={column.label} style={{ width: column.width }} />
+            ))}
+            <col style={{ width: ACTIONS_WIDTH }} />
+          </colgroup>
+
           <thead>
             <tr className="border-b border-border bg-muted/50">
               {COLUMNS.map((column, index) => (
                 <th
-                  key={column}
+                  key={column.label}
                   scope="col"
                   className={cn(
-                    'whitespace-nowrap border-r border-border px-3 py-2 font-semibold',
+                    'truncate border-r border-border px-3 py-2.5 font-semibold sm:py-2',
                     // "Tipo" acompanha a rolagem horizontal: numa planilha larga,
                     // perder de vista de que conta é a linha inutiliza o resto.
                     index === 0 && 'sticky left-0 z-10 bg-muted text-left',
                     index > 0 && 'text-center',
                   )}
                 >
-                  {column}
+                  {column.label}
                 </th>
               ))}
-              <th scope="col" className="w-24 px-2 py-2">
+              <th scope="col" className="px-2 py-2">
                 <span className="sr-only">Ações</span>
               </th>
             </tr>
@@ -108,7 +130,7 @@ export function BillsSheet({
               <td className="tabular border-r border-border px-3 py-2 text-right">
                 {formatCurrency(total)}
               </td>
-              <td colSpan={COLUMNS.length - 2 + 1} className="px-3 py-2 text-xs font-normal text-muted-foreground">
+              <td colSpan={COLUMNS.length - 1} className="px-3 py-2 text-xs font-normal text-muted-foreground">
                 {formatCurrency(paidTotal)} já pago · {formatCurrency(total - paidTotal)} em aberto
               </td>
             </tr>
@@ -116,7 +138,11 @@ export function BillsSheet({
         </table>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground sm:hidden">
+        Toque numa célula para editar — ela salva sozinha. Arraste a tabela para o lado para ver as
+        outras colunas.
+      </p>
+      <p className="hidden text-xs text-muted-foreground sm:block">
         Clique numa célula para editar. <kbd>Enter</kbd> desce, <kbd>Tab</kbd> anda para o lado,
         <kbd> Esc</kbd> desfaz. Cada célula salva sozinha ao sair dela.
       </p>
@@ -229,7 +255,7 @@ function SheetRow({
         label={`Vencimento de ${data.bill.name}`}
       />
 
-      <td className="border-r border-border px-3 py-1 text-center">
+      <td className="border-r border-border px-3 py-1.5 text-center sm:py-1">
         <input
           type="checkbox"
           checked={data.isPaid}
@@ -237,7 +263,7 @@ function SheetRow({
           data-cell={`${rowIndex}-4`}
           onKeyDown={moveOnKey}
           aria-label={`${data.bill.name} paga`}
-          className="h-4 w-4 cursor-pointer accent-emerald-600"
+          className="h-5 w-5 cursor-pointer accent-emerald-600 sm:h-4 sm:w-4"
         />
       </td>
 
@@ -275,22 +301,22 @@ function SheetRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-9 w-9 sm:h-7 sm:w-7"
             disabled={isFirst || moving}
             onClick={() => handleMove('up')}
             aria-label={`Subir ${data.bill.name}`}
           >
-            <ChevronUp className="h-3.5 w-3.5" />
+            <ChevronUp className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-9 w-9 sm:h-7 sm:w-7"
             disabled={isLast || moving}
             onClick={() => handleMove('down')}
             aria-label={`Descer ${data.bill.name}`}
           >
-            <ChevronDown className="h-3.5 w-3.5" />
+            <ChevronDown className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </Button>
 
           <ConfirmButton
@@ -302,10 +328,10 @@ function SheetRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9 sm:h-7 sm:w-7"
                 aria-label={`Excluir ${data.bill.name}`}
               >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                <Trash2 className="h-4 w-4 text-destructive sm:h-3.5 sm:w-3.5" />
               </Button>
             }
           />
@@ -396,7 +422,7 @@ function moveOnKey(event: React.KeyboardEvent<HTMLInputElement>) {
 }
 
 const CELL_INPUT =
-  'w-full bg-transparent px-1 py-1 text-sm outline-none focus:bg-background focus:ring-1 focus:ring-primary'
+  'w-full bg-transparent px-1 py-1.5 text-sm outline-none focus:bg-background focus:ring-1 focus:ring-primary sm:py-1'
 
 function TextCell({
   value,
@@ -438,7 +464,7 @@ function TextCell({
   return (
     <td
       className={cn(
-        'border-r border-border px-2 py-1',
+        'border-r border-border px-2 py-1.5 sm:py-1',
         sticky && 'sticky left-0 z-10 bg-card',
       )}
     >
@@ -507,7 +533,7 @@ function CurrencyCell({
   }
 
   return (
-    <td className="border-r border-border px-2 py-1">
+    <td className="border-r border-border px-2 py-1.5 sm:py-1">
       <input
         inputMode="decimal"
         value={editing ? draft : display}
@@ -555,10 +581,14 @@ function DateCell({
   }
 
   return (
-    <td className="border-r border-border px-2 py-1">
+    <td className="border-r border-border px-2 py-1.5 sm:py-1">
       <input
         type="date"
         value={draft}
+        // Sem data, o navegador escreve "dd/mm/aaaa" em cinza. Numa planilha
+        // com duas colunas de data e uma dúzia de linhas, isso é mais texto
+        // inútil que dado. O CSS esconde o formato até a célula receber foco.
+        data-empty={draft ? undefined : 'true'}
         data-cell={`${rowIndex}-${colIndex}`}
         onChange={(event) => {
           setDraft(event.target.value)

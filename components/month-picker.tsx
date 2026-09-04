@@ -25,7 +25,12 @@ export function MonthPicker({ value }: { value: string }) {
   const isCurrentMonth = value === toReferenceMonth()
 
   return (
-    <div className="flex items-center gap-1" data-pending={pending || undefined}>
+    // No celular ocupa a linha e joga as setas para as bordas — alvo de toque
+    // grande e longe uma da outra. No desktop volta a ser compacto.
+    <div
+      className="flex flex-1 items-center justify-between gap-1 sm:flex-none sm:justify-start"
+      data-pending={pending || undefined}
+    >
       <Button
         variant="ghost"
         size="icon"
