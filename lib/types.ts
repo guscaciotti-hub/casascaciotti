@@ -69,6 +69,8 @@ export interface FixedBill {
   is_active: boolean
   notes: string | null
   created_at: string
+  /** Posição da linha na planilha de contas. */
+  sort_order: number
 }
 
 export interface BillPayment {
@@ -81,6 +83,18 @@ export interface BillPayment {
   amount_paid: number | null
   /** Parcela de juros dentro de `amount_paid`. Nulo quando pago em dia. */
   interest_paid: number | null
+  /** Coluna "Valor" da planilha: o previsto do mês. */
+  amount_due: number | null
+  /** Coluna "Parcela". Texto livre: "9/12", "-", vazio. */
+  installment: string | null
+  /** Coluna "Vencimento" do mês. Sobrepõe `fixed_bills.due_day`. */
+  due_date: string | null
+  /** Coluna "Quem?". */
+  paid_by: string | null
+  /** Coluna "Pago em:". */
+  paid_on: string | null
+  /** Coluna "Observações". */
+  notes: string | null
 }
 
 export interface SavingsAccount {

@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { createClient } from '@/lib/supabase/server'
-import { addMonths, billDueDate, lastMonths } from '@/lib/format'
+import { addMonths, billDueDate, lastMonths, parseIsoDate } from '@/lib/format'
 import type {
   BillPayment,
   Category,
@@ -156,8 +156,10 @@ export async function getFixedBills(): Promise<FixedBill[]> {
   const { data } = await supabase
     .from('fixed_bills')
     .select('*')
-    .order('due_day')
-    .order('name')
+    // A ordem é a da planilha: onde a pessoa colocou a linha. Ordenar por
+    // vencimento embaralharia a lista que ela conhece de cor.
+    .order('sort_order')
+    .order('created_at')
 
   return (data ?? []) as FixedBill[]
 }
@@ -287,7 +289,11 @@ export function buildBillStatuses(
   return bills
     .map((bill) => {
       const payment = byBill.get(bill.id) ?? null
-      const dueDate = billDueDate(referenceMonth, bill.due_day)
+      // O vencimento do mês, quando informado na planilha, vale mais que o dia
+      // padrão da conta: é ele que a pessoa olha.
+      const dueDate = payment?.due_date
+        ? parseIsoDate(payment.due_date)
+        : billDueDate(referenceMonth, bill.due_day)
       const isPaid = payment?.is_paid ?? false
       const daysToDue = daysUntil(today, dueDate)
 
@@ -298,10 +304,12 @@ export function buildBillStatuses(
         isPaid,
         isOverdue: !isPaid && daysToDue < 0,
         isDueSoon: !isPaid && daysToDue >= 0 && daysToDue <= DUE_SOON_DAYS,
-        effectiveAmount: Number(payment?.amount_paid ?? bill.amount),
+        // O que saiu de fato manda; sem isso, o valor lançado no mês; sem isso,
+        // o valor cadastrado na conta.
+        effectiveAmount: Number(payment?.amount_paid ?? payment?.amount_due ?? bill.amount),
       }
     })
-    .sort((a, b) => a.bill.due_day - b.bill.due_day || a.bill.name.localeCompare(b.bill.name))
+    .sort((a, b) => a.bill.sort_order - b.bill.sort_order || a.bill.name.localeCompare(b.bill.name))
 }
 
 function daysUntil(from: Date, to: Date): number {

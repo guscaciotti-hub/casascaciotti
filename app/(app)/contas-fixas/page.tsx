@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 import { PageContainer, PageHeader } from '@/components/page-header'
 import { MonthPicker } from '@/components/month-picker'
-import { BillsGrid, NewBillDialog, type BillCardData } from '@/components/bills/bills-grid'
+import { NewBillDialog, type BillCardData } from '@/components/bills/bills-grid'
+import { BillsView } from '@/components/bills/bills-view'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildBillStatuses, getBillPayments, getCategories, getFixedBills } from '@/lib/queries'
 import { normalizeMonthParam, toReferenceMonth } from '@/lib/format'
@@ -21,7 +22,7 @@ export default async function FixedBillsPage({
     <PageContainer>
       <PageHeader
         title="Contas fixas"
-        description="O que se repete todo mês, em ordem de vencimento."
+        description="As contas da casa, na mesma ordem de sempre."
         action={
           <>
             <MonthPicker value={referenceMonth} />
@@ -67,7 +68,7 @@ async function BillsContent({ referenceMonth }: { referenceMonth: string }) {
     isVariable: Number(status.bill.amount) === 0,
   }))
 
-  return <BillsGrid bills={cards} categories={categories} referenceMonth={referenceMonth} />
+  return <BillsView bills={cards} categories={categories} referenceMonth={referenceMonth} />
 }
 
 function toIsoDate(date: Date): string {
