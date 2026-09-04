@@ -80,6 +80,8 @@ As migrations estão em `supabase/migrations/`, em ordem:
 | `0003_transaction_months.sql` | View `transactions_monthly`, que resolve o mês de cada lançamento |
 | `0004_bill_interest.sql` | Juros pagos numa conta fixa |
 | `0005_transaction_payments.sql` | `is_payment`, que separa pagamento de fatura de gasto |
+| `0006_bill_sheet.sql` | Colunas da planilha de contas e a ordem das linhas |
+| `0007_messages.sql` | Recados e marca de leitura |
 
 Com a [CLI do Supabase](https://supabase.com/docs/guides/local-development):
 
@@ -106,6 +108,46 @@ Supabase: e-mail `<usuario>@casascaciotti.local`, senha à escolha, e marque
 **Auto Confirm User**. Não há cadastro pela interface: é um sistema fechado.
 
 Para trocar uma senha: **Authentication → Users → o usuário → Reset password**.
+
+São duas contas, `gustavo` e `renata`, com exatamente os mesmos privilégios —
+não há administrador. O RLS não distingue as duas, e nenhuma tela esconde nada
+da outra.
+
+## A planilha de contas
+
+A casa controla as contas há anos numa planilha compartilhada. Trocar o jeito
+de trabalhar de quem já domina a ferramenta é o caminho mais curto para o
+sistema não ser usado, então a tela de contas abre **na planilha**, com as
+mesmas colunas e a mesma mecânica: clica na célula, digita, `Enter` desce,
+`Tab` anda para o lado, `Esc` desfaz, e cada célula salva sozinha ao sair
+dela. Os cartões continuam a um clique, e a escolha fica no navegador de cada
+um.
+
+Quase toda coluna é **do mês**, não da conta: o valor do cartão muda todo mês,
+a parcela anda, quem pagou varia. Por isso `Valor`, `Parcela`, `Vencimento`,
+`Quem?`, `Pago em:` e `Observações` vivem em `bill_payments`, que já é a linha
+por (conta, mês) — só o `Tipo` fica em `fixed_bills`. Na prática
+`bill_payments` deixou de significar "pagamento" e passou a significar "a linha
+daquela conta naquele mês"; `is_paid` é a caixinha de Status.
+
+`fixed_bills.sort_order` guarda a posição da linha. Numa planilha a linha fica
+onde a pessoa colocou: ordenar por vencimento embaralharia uma lista que já se
+sabe de cor, e metade das contas nem tem vencimento preenchido.
+
+## Recados
+
+A conversa sobre dinheiro ficava no WhatsApp e sumia no meio do resto. Em
+`/recados` ela fica junto do que a conversa é sobre. São duas pessoas, então
+não há salas nem destinatário: uma conversa só.
+
+A distinção que importa é entre **recado** e **pedido**. "Paguei a luz" se lê e
+acabou; "me manda a fatura do Nubank" fica pendente até alguém marcar como
+feito. É o pedido em aberto que o sininho continua cobrando — **ler não é
+atender**, então abrir a conversa zera o não lido mas não o pedido.
+
+O sininho se atualiza por `GET /api/inbox`, e não com `router.refresh()`, de
+propósito: recarregar a página a cada 30 segundos apagaria o que estivesse
+sendo digitado na planilha de contas.
 
 ## Como o dinheiro é contado
 
@@ -210,7 +252,7 @@ Coisas a acertar em qualquer parser:
 
 ```
 app/
-  (app)/            telas autenticadas: dashboard, faturas, contas, reserva…
+  (app)/            telas autenticadas: dashboard, faturas, contas, reserva, recados…
   actions/          Server Actions (categorias, estabelecimentos, lançamentos…)
   api/
     statements/import   pipeline de importação de PDF

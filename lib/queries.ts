@@ -6,6 +6,8 @@ import type {
   BillPayment,
   Category,
   FixedBill,
+  Inbox,
+  Message,
   Merchant,
   MerchantRule,
   SavingsAccount,
@@ -395,4 +397,60 @@ export async function getDashboardData(referenceMonth: string) {
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
+}
+
+// ---------------------------------------------------------------------------
+// Recados
+// ---------------------------------------------------------------------------
+
+/** A conversa da casa, da mais antiga para a mais nova. */
+export async function getMessages(limit = 300): Promise<Message[]> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  // A consulta pega as mais recentes; a tela lê de cima para baixo.
+  return ((data ?? []) as Message[]).reverse()
+}
+
+/**
+ * O que o sininho mostra para uma pessoa.
+ *
+ * Não lido é "mensagem da outra pessoa mais nova que a minha última leitura".
+ * Sem marca de leitura ainda, tudo que veio da outra pessoa conta — é o
+ * primeiro acesso, e o histórico inteiro é novidade para ela.
+ */
+export async function getInbox(userId: string): Promise<Inbox> {
+  const supabase = createClient()
+
+  const [{ data: read }, { data: recent }, { data: requests }] = await Promise.all([
+    supabase.from('message_reads').select('last_read_at').eq('user_id', userId).maybeSingle(),
+    supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(8),
+    supabase
+      .from('messages')
+      .select('*')
+      .eq('is_request', true)
+      .is('done_at', null)
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ])
+
+  const lastReadAt = read?.last_read_at as string | undefined
+
+  let unreadQuery = supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .neq('author_id', userId)
+  if (lastReadAt) unreadQuery = unreadQuery.gt('created_at', lastReadAt)
+
+  const { count } = await unreadQuery
+
+  return {
+    unread: count ?? 0,
+    pendingRequests: (requests ?? []) as Message[],
+    recent: (recent ?? []) as Message[],
+  }
 }

@@ -123,3 +123,25 @@ export interface TransactionWithRelations extends Transaction {
 
 /** Nome da categoria de fallback. Referenciado em código e no seed. */
 export const UNCATEGORIZED = 'Não identificado'
+
+/** Recado da casa. Duas pessoas, uma conversa só. */
+export interface Message {
+  id: string
+  author_id: string
+  author_name: string
+  body: string
+  /** `true` quando é um pedido — fica pendente até alguém marcar como feito. */
+  is_request: boolean
+  done_at: string | null
+  created_at: string
+}
+
+/** O que o sininho precisa saber. */
+export interface Inbox {
+  /** Mensagens da outra pessoa desde a última vez que esta abriu a conversa. */
+  unread: number
+  /** Pedidos ainda em aberto, de quem quer que seja. */
+  pendingRequests: Message[]
+  /** As últimas mensagens, para o sininho mostrar sem sair da tela. */
+  recent: Message[]
+}

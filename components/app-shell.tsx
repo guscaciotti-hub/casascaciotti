@@ -7,20 +7,24 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   PiggyBank,
   Receipt,
   Store,
   Tags,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from '@/components/notification-bell'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
+import type { Inbox } from '@/lib/types'
 
 const NAV_ITEMS = [
   { href: '/', label: 'Início', icon: LayoutDashboard },
   { href: '/faturas', label: 'Faturas', icon: CreditCard },
   { href: '/contas-fixas', label: 'Contas', icon: Receipt },
   { href: '/reserva', label: 'Reserva', icon: PiggyBank },
+  { href: '/recados', label: 'Recados', icon: MessageCircle },
 ]
 
 const SECONDARY_ITEMS = [
@@ -30,9 +34,11 @@ const SECONDARY_ITEMS = [
 
 export function AppShell({
   username,
+  inbox,
   children,
 }: {
   username: string
+  inbox: Inbox
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -71,6 +77,7 @@ export function AppShell({
         <div className="space-y-3 border-t border-border px-4 py-4">
           <p className="truncate px-2 text-xs text-muted-foreground">{username}</p>
           <div className="flex items-center gap-1">
+            <NotificationBell initial={inbox} />
             <ThemeToggle />
             <SignOutButton />
           </div>
@@ -84,6 +91,7 @@ export function AppShell({
             Casa Scaciotti
           </Link>
           <div className="flex items-center gap-1">
+            <NotificationBell initial={inbox} />
             <ThemeToggle />
             <SignOutButton />
           </div>
@@ -94,7 +102,7 @@ export function AppShell({
         {/* Navegação inferior — mobile */}
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden">
           <div className="mx-auto grid max-w-lg grid-cols-5">
-            {[...NAV_ITEMS, SECONDARY_ITEMS[0]].map((item) => (
+            {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
