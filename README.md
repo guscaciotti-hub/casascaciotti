@@ -144,6 +144,7 @@ Cobrem as peças em que bug silencioso vira dado errado:
 - `lib/__tests__/matcher.test.ts` — matcher de regras e sua precedência
 - `lib/__tests__/parsers.test.ts` — parsers de fatura
 - `lib/__tests__/santander.test.ts` — o layout do Santander, que é o mais atípico
+- `lib/__tests__/itau.test.ts` — o Itaú, que gruda o valor na descrição
 - `lib/__tests__/pipeline.test.ts` — ponta a ponta sobre um PDF de verdade
 
 Mexeu em normalização ou no matcher? Traga o teste junto.

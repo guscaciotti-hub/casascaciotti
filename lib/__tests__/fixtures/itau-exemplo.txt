@@ -1,0 +1,60 @@
+Estamos lhe enviando esta fatura para simples conferência.
+FULANO DE TAL
+AVENIDA EXEMPLO, 849
+11045-003 SANTOS SP
+Resumo da fatura em R$
+Total da fatura anterior1.266,50
+Pagamento efetuado em 10/08/2026-1.266,50
+Saldo financiado0,00
+Lançamentos atuais1.009,83
+Total desta fatura1.009,83
+Pagamento mínimo:
+R$ 100,98
+Total a pagarR$ 1.051,78
+Com vencimento em:
+10/09/2026
+Titular
+FULANO DE TAL
+Cartão
+0000.XXXX.XXXX.0000
+Vencimento: 10/09/2026
+Banco Itaú Unibanco
+Pagamentos efetuados
+DATAVALOR EM R$
+10/08PAGAMENTO DEB AUTOMATIC-1.266,50
+Total dos pagamentos-1.266,50
+Lançamentos: compras e saques
+FULANO DE TAL
+DATAESTABELECIMENTOVALOR EM R$
+10/08LOJAEXEMPLO*M 01/03193,33
+eletronicos  Bauru
+10/08OUTRALOJA *EXEMPL 01/02172,86
+lazer  SAO PAULO
+13/08EXEMPLOODONTOSAO JOSE DOSBR112,20
+outros  SAO JOSE DOS
+Lançamentos no cartão478,39
+Lançamentos: produtos e serviços
+DATAPRODUTOS/SERVIÇOSVALOR EM R$
+10/08PIX Fulano Exemplo de85,01
+Principal (R$ 78,49) + Juros (R$ 6,52)
+11/08PIX EXEMPLO PAY FUNDO DE IN210,15
+Principal (R$ 197,21) + Juros (R$ 12,94)
+24/08PIX Fulano Exemplo de54,12
+Principal (R$ 51,76) + Juros (R$ 2,36)
+25/08PIX EXEMPLO PLATAFORMA D182,16
+Principal (R$ 176,19) + Juros (R$ 5,97)
+Lançamentos produtos e serviços531,44
+Total dos lançamentos atuais1.009,83
+Compras parceladas - próximas faturas
+DATAESTABELECIMENTOVALOR EM R$
+10/08LOJAEXEMPLO*M 02/03193,33
+DATAESTABELECIMENTOVALOR EM R$
+10/08OUTRALOJA *EXEMPL 02/02172,85
+Próxima fatura366,18
+Demais faturas193,33
+Total para próximas faturas559,51
+Limites de créditoValor em R$
+Limite total de crédito1.000,00
+Limite disponível-569,34
+Encargos cobrados nesta fatura
+Juros do rotativo15,10 %0,00

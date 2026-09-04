@@ -56,7 +56,7 @@ const CREDIT_MARKERS: RegExp[] = [
   /\bREEMBOLSO\b/,
   /\bCASHBACK\b/,
   /\bCREDITO\s+DE\b/,
-  /\bPAGAMENTO\s+(RECEBIDO|EFETUADO|FATURA|EM\s+)/,
+  /\bPAGAMENTO\s+(RECEBIDO|EFETUADO|FATURA|DEB|EM\s+)/,
   /\bPAGTO\b/,
   /\bDESCONTO\s+ANTECIPACAO\b/,
   /\bAJUSTE\s+A\s+CREDITO\b/,
@@ -92,6 +92,8 @@ const INVOICE_PAYMENT_MARKERS: RegExp[] = [
   /\bPAGAMENTO\s+EFETUADO\b/,
   /\bPAGTO\s+(DE\s+)?FATURA\b/,
   /\bPAGAMENTO\s+EM\s+\w+\b/,
+  // Itaú: "PAGAMENTO DEB AUTOMATIC" (débito automático da fatura).
+  /\bPAGAMENTO\s+DEB/,
   /\bSALDO\s+ANTERIOR\b/,
 ]
 

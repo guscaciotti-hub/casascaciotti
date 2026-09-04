@@ -67,8 +67,12 @@ export function parseStatement(
 /** Lê o total da fatura, quando o documento o imprime de forma reconhecível. */
 export function extractTotalAmount(text: string): number | null {
   const canonical = canonicalLine(text)
+  // A ordem importa. "Total desta fatura" vem primeiro porque o Itaú imprime
+  // logo acima um "Total da fatura anterior" — casar com o errado troca o
+  // valor da fatura pelo do mês passado. O lookahead protege o caso genérico.
   const patterns = [
-    /TOTAL\s+(?:DA\s+|DESTA\s+)?FATURA[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
+    /TOTAL\s+DESTA\s+FATURA[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
+    /TOTAL\s+(?:DA\s+)?FATURA(?!\s*ANTERIOR)[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
     /VALOR\s+TOTAL[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
     /TOTAL\s+A\s+PAGAR[^\d\-]{0,40}(-?\s*R?\$?\s*[\d.]+,\d{2})/,
   ]
