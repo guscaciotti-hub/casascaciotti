@@ -66,6 +66,10 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sim | Chave pública do Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | não | Só para scripts administrativos. Nunca vai ao client |
 | `ANTHROPIC_API_KEY` | não | Habilita o botão "Sugerir categorias com IA" |
+| `SMTP_URL` | não | Aviso de recado por e-mail via SMTP (Gmail com senha de app serve) |
+| `RESEND_API_KEY` | não | Alternativa ao SMTP. Exige domínio verificado no Resend |
+| `MAIL_FROM` | não | Remetente. Sem isso, usa o usuário do `SMTP_URL` |
+| `NEXT_PUBLIC_APP_URL` | não | Link dentro do e-mail. Na Vercel é deduzido sozinho |
 
 `.env` e `.env.local` estão no `.gitignore` e nunca devem ser commitados.
 
@@ -82,6 +86,8 @@ As migrations estão em `supabase/migrations/`, em ordem:
 | `0005_transaction_payments.sql` | `is_payment`, que separa pagamento de fatura de gasto |
 | `0006_bill_sheet.sql` | Colunas da planilha de contas e a ordem das linhas |
 | `0007_messages.sql` | Recados e marca de leitura |
+| `0008_message_attachments.sql` | Anexos nos recados e o bucket `chat` |
+| `0009_notification_prefs.sql` | Apelido e e-mail de aviso de cada pessoa |
 
 Com a [CLI do Supabase](https://supabase.com/docs/guides/local-development):
 
@@ -145,9 +151,43 @@ acabou; "me manda a fatura do Nubank" fica pendente até alguém marcar como
 feito. É o pedido em aberto que o sininho continua cobrando — **ler não é
 atender**, então abrir a conversa zera o não lido mas não o pedido.
 
-O sininho se atualiza por `GET /api/inbox`, e não com `router.refresh()`, de
-propósito: recarregar a página a cada 30 segundos apagaria o que estivesse
-sendo digitado na planilha de contas.
+Anexar é trivial de propósito, porque o pedido mais comum é justamente "me
+manda a fatura": há o clipe, o arrastar-e-soltar sobre a conversa e o colar
+(`Ctrl+V` numa foto de conta já anexa). Imagem aparece na conversa; PDF vira
+uma linha para baixar. O bucket `chat` é privado — fatura de cartão não fica
+em URL pública adivinhável —, então a coluna `messages.attachments` guarda a
+**chave** do arquivo e a URL é assinada na leitura, com validade de uma hora.
+Guardar o link no banco daria link vencido.
+
+O sininho e a conversa se atualizam por rotas próprias (`GET /api/inbox` e
+`GET /api/messages`), e não com `router.refresh()`, de propósito: recarregar a
+página a cada poucos segundos apagaria o que estivesse sendo digitado — o
+rascunho no campo de escrever, ou uma célula da planilha de contas.
+
+### Aviso por e-mail e apelido
+
+A casa não vive dentro do sistema o dia inteiro, e um recado atrás de um login
+espera até alguém lembrar de entrar. Quando chega recado, quem tem e-mail
+configurado recebe um aviso com o assunto já dizendo tudo — a notificação do
+celular basta, abrir o e-mail é opcional.
+
+O endereço de cada um e o apelido pelo qual uma pessoa chama a outra ficam em
+`notification_prefs`, **no banco e não no código**: este repositório é público,
+e endereço de e-mail em arquivo versionado vira alvo de coleta automatizada. É
+também a fonte única do apelido, que aparece tanto no balãozinho do sininho
+quanto no assunto do e-mail.
+
+```sql
+insert into public.notification_prefs (username, nickname, email, email_enabled)
+values ('fulana', 'apelido', 'fulana@exemplo.com', true)
+on conflict (username) do update set
+  nickname = excluded.nickname, email = excluded.email;
+```
+
+Sem `nickname`, a pessoa não vê o balãozinho — só o contador no sininho. Sem
+`SMTP_URL` nem `RESEND_API_KEY`, o envio é pulado em silêncio: o sistema roda
+inteiro sem e-mail, e servidor de e-mail fora do ar nunca impede um recado de
+ser gravado.
 
 ## Como o dinheiro é contado
 

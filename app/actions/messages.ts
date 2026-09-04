@@ -3,9 +3,19 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { emailToUsername } from '@/lib/auth'
+import { notifyNewMessage } from '@/lib/notify'
 import { errorMessage, fail, ok, requireClient, type ActionResult } from '@/app/actions/shared'
 
-const bodySchema = z.string().trim().min(1, 'Escreva alguma coisa.').max(2000)
+const bodySchema = z.string().trim().max(2000)
+
+const attachmentSchema = z.object({
+  path: z.string().min(1),
+  name: z.string().min(1).max(255),
+  type: z.string().max(120),
+  size: z.number().int().nonnegative(),
+})
+
+export type AttachmentInput = z.infer<typeof attachmentSchema>
 
 function revalidateAll() {
   revalidatePath('/recados')
@@ -20,18 +30,39 @@ function revalidateAll() {
  * A diferença não é decoração: pedido pendente é o que o sininho cobra, e o
  * que continua cobrando depois de lido.
  */
-export async function sendMessage(body: string, isRequest = false): Promise<ActionResult> {
+export async function sendMessage(
+  body: string,
+  isRequest = false,
+  attachments: AttachmentInput[] = [],
+): Promise<ActionResult> {
   try {
     const text = bodySchema.parse(body)
+    const files = z.array(attachmentSchema).max(10).parse(attachments)
+
+    // Anexo sozinho basta: mandar a fatura sem escrever nada é uso legítimo.
+    if (!text && files.length === 0) return fail('Escreva alguma coisa ou anexe um arquivo.')
+
     const { supabase, user } = await requireClient()
+    const authorName = emailToUsername(user.email) || 'alguém'
 
     const { error } = await supabase.from('messages').insert({
       author_id: user.id,
-      author_name: emailToUsername(user.email) || 'alguém',
-      body: text,
+      author_name: authorName,
+      body: text || (files.length === 1 ? files[0].name : `${files.length} arquivos`),
       is_request: isRequest,
+      attachments: files,
     })
     if (error) return fail(`Não foi possível enviar: ${error.message}`)
+
+    // Esperado de propósito: promessa solta morre com a função serverless, e
+    // um aviso que às vezes não sai é pior que um envio um pouco mais lento.
+    // Nada aqui lança — o recado já está gravado.
+    await notifyNewMessage({
+      authorUsername: authorName,
+      body: text,
+      isRequest,
+      attachmentCount: files.length,
+    })
 
     revalidateAll()
     return ok()

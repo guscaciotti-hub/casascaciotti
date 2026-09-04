@@ -35,10 +35,13 @@ const SECONDARY_ITEMS = [
 export function AppShell({
   username,
   inbox,
+  nickname,
   children,
 }: {
   username: string
   inbox: Inbox
+  /** Como esta pessoa chama a outra. Sem apelido, sem balãozinho. */
+  nickname: string | null
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -74,24 +77,20 @@ export function AppShell({
           ))}
         </nav>
 
-        <div className="space-y-3 border-t border-border px-4 py-4">
-          <p className="truncate px-2 text-xs text-muted-foreground">{username}</p>
-          <div className="flex items-center gap-1">
-            <NotificationBell initial={inbox} />
-            <ThemeToggle />
-            <SignOutButton />
-          </div>
+        <div className="border-t border-border px-6 py-4">
+          <p className="truncate text-xs text-muted-foreground">{username}</p>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Cabeçalho — mobile */}
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/85 px-4 py-3 backdrop-blur lg:hidden">
-          <Link href="/" className="text-sm font-semibold tracking-tight">
+        {/* Cabeçalho — o sininho fica aqui em cima, em qualquer tela. */}
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/85 px-4 py-3 backdrop-blur">
+          {/* No desktop a marca já está na barra lateral; aqui só no celular. */}
+          <Link href="/" className="text-sm font-semibold tracking-tight lg:hidden">
             Casa Scaciotti
           </Link>
-          <div className="flex items-center gap-1">
-            <NotificationBell initial={inbox} />
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell initial={inbox} username={username} nickname={nickname} />
             <ThemeToggle />
             <SignOutButton />
           </div>

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { createClient } from '@/lib/supabase/server'
-import { getInbox } from '@/lib/queries'
+import { getInbox, getNickname } from '@/lib/queries'
 import { emailToUsername } from '@/lib/auth'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -12,10 +12,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/login')
 
-  const inbox = await getInbox(user.id)
+  const username = emailToUsername(user.email)
+  const [inbox, nickname] = await Promise.all([getInbox(user.id), getNickname(username)])
 
   return (
-    <AppShell username={emailToUsername(user.email)} inbox={inbox}>
+    <AppShell username={username} inbox={inbox} nickname={nickname}>
       {children}
     </AppShell>
   )

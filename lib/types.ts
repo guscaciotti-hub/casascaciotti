@@ -124,6 +124,17 @@ export interface TransactionWithRelations extends Transaction {
 /** Nome da categoria de fallback. Referenciado em código e no seed. */
 export const UNCATEGORIZED = 'Não identificado'
 
+/** Arquivo anexado a um recado. */
+export interface MessageAttachment {
+  /** Chave no bucket `chat`. A URL é assinada na leitura, nunca guardada. */
+  path: string
+  name: string
+  type: string
+  size: number
+  /** URL assinada, preenchida ao ler a conversa. */
+  url?: string
+}
+
 /** Recado da casa. Duas pessoas, uma conversa só. */
 export interface Message {
   id: string
@@ -134,6 +145,7 @@ export interface Message {
   is_request: boolean
   done_at: string | null
   created_at: string
+  attachments: MessageAttachment[]
 }
 
 /** O que o sininho precisa saber. */

@@ -413,7 +413,37 @@ export async function getMessages(limit = 300): Promise<Message[]> {
     .limit(limit)
 
   // A consulta pega as mais recentes; a tela lê de cima para baixo.
-  return ((data ?? []) as Message[]).reverse()
+  return withSignedAttachments(((data ?? []) as Message[]).reverse())
+}
+
+/** Validade da URL assinada de um anexo. */
+const ATTACHMENT_URL_TTL = 60 * 60
+
+/**
+ * Troca a chave de cada anexo por uma URL assinada.
+ *
+ * O bucket é privado — fatura de cartão não fica em URL pública adivinhável —
+ * então o link é gerado na leitura e vence sozinho. Guardar o link no banco
+ * daria link vencido.
+ */
+async function withSignedAttachments(messages: Message[]): Promise<Message[]> {
+  const paths = messages.flatMap((message) =>
+    (message.attachments ?? []).map((attachment) => attachment.path),
+  )
+  if (paths.length === 0) return messages
+
+  const supabase = createClient()
+  const { data } = await supabase.storage.from('chat').createSignedUrls(paths, ATTACHMENT_URL_TTL)
+
+  const urlByPath = new Map((data ?? []).map((row) => [row.path ?? '', row.signedUrl]))
+
+  return messages.map((message) => ({
+    ...message,
+    attachments: (message.attachments ?? []).map((attachment) => ({
+      ...attachment,
+      url: urlByPath.get(attachment.path) ?? undefined,
+    })),
+  }))
 }
 
 /**
@@ -453,4 +483,22 @@ export async function getInbox(userId: string): Promise<Inbox> {
     pendingRequests: (requests ?? []) as Message[],
     recent: (recent ?? []) as Message[],
   }
+}
+
+/**
+ * O apelido pelo qual esta pessoa chama a outra.
+ *
+ * Vem do banco, e não de constante no código, por dois motivos: o repositório
+ * é público, e o mesmo apelido aparece no balãozinho do sininho e no assunto
+ * do e-mail — duas cópias em camadas diferentes divergiriam.
+ */
+export async function getNickname(username: string): Promise<string | null> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('notification_prefs')
+    .select('nickname')
+    .eq('username', username)
+    .maybeSingle()
+
+  return (data?.nickname as string | null) ?? null
 }
